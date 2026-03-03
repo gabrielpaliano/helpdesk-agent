@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useChat } from '@/hooks/useChat';
-import { ChatLayout } from '@/components/ChatLayout';
+import { Chat } from '@/components/Chat';
 import { ActionSidebar } from '@/components/ActionSidebar';
+import { SessionSidebar } from '@/components/SessionSidebar';
 
 export default function App() {
-  const { sessionId, messages, events, isLoading, error, sendMessage } = useChat();
+  const { sessionId, messages, events, isLoading, error, sendMessage, stop, newSession, loadSession, refreshKey } = useChat();
   const [input, setInput] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const hasMessages = messages.length > 0 || isLoading;
 
   function handleSend() {
     const text = input.trim();
@@ -15,24 +17,35 @@ export default function App() {
     setInput('');
   }
 
+  function handleSelectSession(id: string) {
+    setInput('');
+    loadSession(id);
+  }
+
+  function handleNewSession() {
+    setInput('');
+    newSession();
+  }
+
   return (
-    <>
-      <ChatLayout
+    <div style={{ display: 'flex', height: '100%' }}>
+      <SessionSidebar
+        currentSessionId={sessionId}
+        onSelectSession={handleSelectSession}
+        onNewSession={handleNewSession}
+        refreshKey={refreshKey}
+      />
+      <Chat
         input={input}
         onInputChange={setInput}
         messages={messages}
         isLoading={isLoading}
         sessionId={sessionId}
         error={error}
-        eventCount={events.length}
         onSend={handleSend}
-        onOpenSidebar={() => setSidebarOpen(true)}
+        onStop={stop}
       />
-      <ActionSidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        events={events}
-      />
-    </>
+      {hasMessages && <ActionSidebar events={events} />}
+    </div>
   );
 }

@@ -13,6 +13,40 @@ export const swaggerSpec = {
   ],
   paths: {
     '/sessions': {
+      get: {
+        tags: ['Sessions'],
+        summary: 'Listar sessões',
+        description: 'Retorna todas as sessões que possuem ao menos uma mensagem, ordenadas da mais recente para a mais antiga. Usado pela sidebar de histórico de conversas.',
+        responses: {
+          200: {
+            description: 'Lista de sessões',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string', format: 'uuid' },
+                      createdAt: { type: 'string', format: 'date-time' },
+                      messageCount: { type: 'integer', example: 4 },
+                      firstMessage: { type: 'string', nullable: true, example: 'Qual o status dos serviços?' },
+                    },
+                  },
+                },
+                example: [
+                  {
+                    id: '550e8400-e29b-41d4-a716-446655440000',
+                    createdAt: '2024-01-01T20:00:00Z',
+                    messageCount: 4,
+                    firstMessage: 'Qual o status dos serviços?',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
       post: {
         tags: ['Sessions'],
         summary: 'Criar nova sessão',

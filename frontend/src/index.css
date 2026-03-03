@@ -8,18 +8,36 @@
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  background: #0a0a0a;
-  color: #fff;
+  background: #0c111d;
+  color: #e6edf4;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
+#root {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+
+textarea::placeholder {
+  color: #4a5568;
 }
-::-webkit-scrollbar-thumb {
-  background: #404040;
-  border-radius: 2px;
+
+textarea:focus {
+  outline: none;
+}
+
+/* Hide scrollbar visually but keep it functional */
+.scroll-area::-webkit-scrollbar {
+  width: 0px;
+}
+
+@keyframes thinking-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+.thinking-pulse {
+  animation: thinking-pulse 1.8s ease-in-out infinite;
 }

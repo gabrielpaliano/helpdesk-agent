@@ -1,100 +1,136 @@
-import { useEffect, useState } from 'react';
 import type { AgentEvent } from '@/types';
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  events: AgentEvent[];
-}
-
-const EVENT_CONFIG = {
-  thought:     { icon: '💭', label: 'Roteamento',   color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
-  tool_call:   { icon: '🔧', label: 'Tool chamada', color: 'text-amber-400  bg-amber-500/10  border-amber-500/20'  },
-  tool_result: { icon: '✅', label: 'Resultado',    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+// ── Design tokens (same palette as Chat.tsx) ─────────────────
+const C = {
+  bg:         '#0e1521',
+  bgElevated: '#131b2b',
+  bgCode:     '#0c111d',
+  border:     'rgba(255,255,255,0.08)',
+  text:       '#e6edf4',
+  muted:      '#5a6478',
 } as const;
 
+const EVENT_STYLE: Record<AgentEvent['type'], { label: string; color: string; bg: string; border: string }> = {
+  thought:     { label: 'Raciocínio', color: '#a78bfa', bg: 'rgba(167,139,250,0.10)', border: 'rgba(167,139,250,0.25)' },
+  tool_call:   { label: 'Tool',       color: '#fbbf24', bg: 'rgba(251,191,36,0.10)',  border: 'rgba(251,191,36,0.25)'  },
+  tool_result: { label: 'Resultado',  color: '#34d399', bg: 'rgba(52,211,153,0.10)',  border: 'rgba(52,211,153,0.25)'  },
+};
+
 function EventCard({ event }: { event: AgentEvent }) {
-  const c = EVENT_CONFIG[event.type];
+  const s = EVENT_STYLE[event.type];
   const time = new Date(event.timestamp).toLocaleTimeString('pt-BR', {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 
   return (
-    <div className="border border-neutral-800 rounded-xl p-3 space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="text-sm">{c.icon}</span>
-        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${c.color}`}>
-          {c.label}
+    <div style={{
+      backgroundColor: C.bgElevated,
+      border: `1px solid ${C.border}`,
+      borderRadius: '0.625rem',
+      padding: '0.75rem',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.5rem',
+    }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span style={{
+          fontSize: '10px', fontWeight: 600,
+          padding: '2px 7px', borderRadius: '9999px',
+          color: s.color, backgroundColor: s.bg, border: `1px solid ${s.border}`,
+          flexShrink: 0, letterSpacing: '0.02em',
+        }}>
+          {s.label}
         </span>
-        <span className="text-[11px] text-neutral-400 font-mono truncate flex-1">{event.name}</span>
-        <span className="text-[10px] text-neutral-600 shrink-0">{time}</span>
+        <span style={{
+          fontSize: '11px', color: C.muted,
+          fontFamily: 'monospace',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          flex: 1,
+        }}>
+          {event.name}
+        </span>
+        <span style={{ fontSize: '10px', color: C.muted, flexShrink: 0 }}>
+          {time}
+        </span>
       </div>
-      <pre className="text-[11px] text-neutral-400 bg-neutral-950 rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed">
+
+      {/* JSON data */}
+      <pre style={{
+        fontSize: '10px', color: C.muted,
+        backgroundColor: C.bgCode,
+        borderRadius: '0.375rem',
+        padding: '0.5rem 0.625rem',
+        overflowX: 'auto',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-all',
+        fontFamily: 'ui-monospace, monospace',
+        lineHeight: 1.6,
+        margin: 0,
+      }}>
         {JSON.stringify(event.data, null, 2)}
       </pre>
     </div>
   );
 }
 
-export function ActionSidebar({ open, onClose, events }: Props) {
-  const [mounted, setMounted] = useState(false);
-
-  // Monta no DOM quando aberto pela primeira vez, nunca desmonta
-  // (preserva scroll e evita layout shift)
-  useEffect(() => {
-    if (open) setMounted(true);
-  }, [open]);
-
-  if (!mounted) return null;
-
+export function ActionSidebar({ events }: { events: AgentEvent[] }) {
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-200"
-        style={{ opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
-        onClick={onClose}
-      />
-
-      {/* Sidebar */}
-      <div
-        className="fixed top-0 right-0 h-screen w-96 max-w-full bg-neutral-900 border-l border-neutral-800 z-50 flex flex-col transition-transform duration-200"
-        style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-neutral-800 shrink-0">
-          <div>
-            <h2 className="text-sm font-semibold text-white">Ações do Agente</h2>
-            <p className="text-xs text-neutral-500 mt-0.5">O que o agente fez para responder</p>
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            {events.length > 0 && (
-              <span className="text-xs bg-neutral-800 text-neutral-400 px-2 py-0.5 rounded-full border border-neutral-700">
-                {events.length} evento{events.length !== 1 ? 's' : ''}
-              </span>
-            )}
-            <button
-              onClick={onClose}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 hover:text-white hover:bg-neutral-800 transition-all text-xl leading-none"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        {/* Events */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {events.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-              <span className="text-4xl opacity-30">🤖</span>
-              <p className="text-sm font-medium text-neutral-500">Nenhuma ação ainda</p>
-              <p className="text-xs text-neutral-600">Envie uma mensagem para ver o agente em ação</p>
-            </div>
-          ) : (
-            events.map((e, i) => <EventCard key={i} event={e} />)
-          )}
-        </div>
+    <div style={{
+      width: '320px',
+      flexShrink: 0,
+      height: '100%',
+      borderLeft: `1px solid ${C.border}`,
+      backgroundColor: C.bg,
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '1rem 1.25rem',
+        borderBottom: `1px solid ${C.border}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+      }}>
+        <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: C.text }}>
+          Ações do Agente
+        </span>
+        {events.length > 0 && (
+          <span style={{
+            fontSize: '11px', color: C.muted,
+            backgroundColor: C.bgElevated,
+            padding: '2px 8px', borderRadius: '9999px',
+            border: `1px solid ${C.border}`,
+          }}>
+            {events.length}
+          </span>
+        )}
       </div>
-    </>
+
+      {/* Event list */}
+      <div
+        className="scroll-area"
+        style={{
+          flex: 1, overflowY: 'auto', minHeight: 0,
+          padding: '0.875rem',
+          display: 'flex', flexDirection: 'column', gap: '0.5rem',
+        }}
+      >
+        {events.length === 0 ? (
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            height: '100%', gap: '0.5rem', color: C.muted,
+          }}>
+            <span style={{ fontSize: '1.5rem', opacity: 0.25 }}>⚡</span>
+            <span style={{ fontSize: '0.8125rem' }}>Aguardando ações...</span>
+          </div>
+        ) : (
+          events.map((e, i) => <EventCard key={i} event={e} />)
+        )}
+      </div>
+    </div>
   );
 }

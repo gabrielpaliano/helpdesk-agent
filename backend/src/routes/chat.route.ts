@@ -25,7 +25,7 @@ router.post('/', rateLimitBySession, async (req, res) => {
     return;
   }
 
-  if (!memoryStore.exists(sessionId)) {
+  if (!(await memoryStore.exists(sessionId))) {
     res.status(404).json({ error: 'Session not found. Call POST /sessions first.' });
     return;
   }

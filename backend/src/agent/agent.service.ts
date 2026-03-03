@@ -137,7 +137,7 @@ export async function runAgent(
   userMessage: string,
   onEvent: EventCallback,
 ): Promise<string> {
-  const session = memoryStore.get(sessionId);
+  const session = await memoryStore.get(sessionId);
   if (!session) throw new Error('Session not found');
 
   // Step 1: Classify intent
@@ -151,7 +151,7 @@ export async function runAgent(
     timestamp: now(),
   };
   onEvent(thoughtEvent);
-  memoryStore.addEvent(sessionId, thoughtEvent);
+  await memoryStore.addEvent(sessionId, thoughtEvent);
 
   // Step 2: Build the messages array for OpenAI
   // We prepend the system prompt and append the new user message
@@ -198,7 +198,7 @@ export async function runAgent(
           timestamp: now(),
         };
         onEvent(callEvent);
-        memoryStore.addEvent(sessionId, callEvent);
+        await memoryStore.addEvent(sessionId, callEvent);
 
         const toolOutput = executeTool(toolName, toolArgs);
 
@@ -209,7 +209,7 @@ export async function runAgent(
           timestamp: now(),
         };
         onEvent(resultEvent);
-        memoryStore.addEvent(sessionId, resultEvent);
+        await memoryStore.addEvent(sessionId, resultEvent);
 
         // Feed the tool result back into the conversation
         messages.push({
@@ -226,11 +226,11 @@ export async function runAgent(
   }
 
   // Step 4: Persist the full exchange to session history
-  memoryStore.addOpenAIMessage(sessionId, { role: 'user', content: userMessage });
-  memoryStore.addOpenAIMessage(sessionId, { role: 'assistant', content: finalMessage });
+  await memoryStore.addOpenAIMessage(sessionId, { role: 'user', content: userMessage });
+  await memoryStore.addOpenAIMessage(sessionId, { role: 'assistant', content: finalMessage });
 
-  memoryStore.addMessage(sessionId, { role: 'user', content: userMessage, timestamp: now() });
-  memoryStore.addMessage(sessionId, { role: 'assistant', content: finalMessage, timestamp: now() });
+  await memoryStore.addMessage(sessionId, { role: 'user', content: userMessage, timestamp: now() });
+  await memoryStore.addMessage(sessionId, { role: 'assistant', content: finalMessage, timestamp: now() });
 
   return finalMessage;
 }

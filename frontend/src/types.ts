@@ -9,3 +9,10 @@ export interface AgentEvent {
   data: Record<string, unknown>;
   timestamp: string;
 }
+
+export interface SessionSummary {
+  id: string;
+  createdAt: string;
+  messageCount: number;
+  firstMessage: string | null;
+}
